@@ -1,5 +1,5 @@
 # this script it isn't tested yet since we were wroking just on recoded data.
-# we need to test on the robot directly
+# we need to test it on the robot directly
 import rospy
 import math
 from sensor_msgs.msg import Imu, NavSatFix
