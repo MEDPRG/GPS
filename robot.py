@@ -1,11 +1,10 @@
 import csv
-import math
 from collections import deque
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from mpl_toolkits.mplot3d import Axes3D
 
-# --- Sensor Input Simulator ---
+# --- Sensor Input Class ---
 class SimulatedSensorInput:
     def __init__(self, filename):
         with open(filename) as f:
@@ -29,7 +28,7 @@ class SimulatedSensorInput:
         else:
             return None
 
-# --- Adaptive Speed Control System ---
+# --- Adaptive Speed Controller ---
 class TerrainAdaptiveController:
     def __init__(self, sensor_input):
         self.sensor_input = sensor_input
@@ -42,25 +41,27 @@ class TerrainAdaptiveController:
         self.alt_buffer = deque(maxlen=300)
         self.time_counter = 0
 
-        # Log file setup
         self.log_file = open("results_log.csv", "w", newline="")
         self.logger = csv.writer(self.log_file)
-        self.logger.writerow(["time_s", "pitch_deg", "speed", "target_speed", "pwm_output", "altitude_m", "latitude", "longitude"])
+        self.logger.writerow([
+            "time_s", "pitch_deg", "speed", "target_speed",
+            "pwm_output", "altitude_m", "latitude", "longitude"
+        ])
 
     def compute_target_speed(self, pitch):
-        base_speed = 50
+        base_speed = 1.2  # m/s
         if pitch > 5:
-            return base_speed + 10  # Uphill
+            return base_speed + 0.4  # uphill
         elif pitch < -5:
-            return base_speed - 10  # Downhill
+            return base_speed - 0.4  # downhill
         else:
-            return base_speed  # Flat terrain
+            return base_speed  # flat terrain
 
     def compute_pwm_output(self, current_speed, target_speed):
         error = target_speed - current_speed
-        Kp = 1.5
+        Kp = 10.0  # tuned for low-speed robot
         pwm_output = Kp * error
-        return max(0, min(100, pwm_output))
+        return max(0, min(100, pwm_output))  # clamp between 0–100
 
     def step(self):
         data = self.sensor_input.get_next()
@@ -68,30 +69,30 @@ class TerrainAdaptiveController:
             return False
 
         pitch = data["pitch"]
-        current_speed = data["speed"]
+        speed = data["speed"]
         altitude = data["altitude"]
-        latitude = data["latitude"]
-        longitude = data["longitude"]
+        lat = data["latitude"]
+        lon = data["longitude"]
 
         target_speed = self.compute_target_speed(pitch)
-        pwm_output = self.compute_pwm_output(current_speed, target_speed)
+        pwm_output = self.compute_pwm_output(speed, target_speed)
 
         self.pitch_buffer.append(pitch)
-        self.speed_buffer.append((current_speed, target_speed))
+        self.speed_buffer.append((speed, target_speed))
         self.pwm_buffer.append(pwm_output)
         self.altitude_buffer.append(altitude)
-        self.lat_buffer.append(latitude)
-        self.lon_buffer.append(longitude)
+        self.lat_buffer.append(lat)
+        self.lon_buffer.append(lon)
         self.alt_buffer.append(altitude)
 
         self.logger.writerow([
             round(self.time_counter, 2),
             round(pitch, 2),
-            round(current_speed, 2),
+            round(speed, 2),
             round(target_speed, 2),
             round(pwm_output, 2),
             round(altitude, 2),
-            latitude, longitude
+            lat, lon
         ])
 
         self.time_counter += 1
@@ -141,8 +142,8 @@ class TerrainAdaptiveController:
         plt.tight_layout()
         plt.show()
 
-# --- Main ---
+# --- Main Execution ---
 if __name__ == "__main__":
-    sensor = SimulatedSensorInput("simulated_gps_data.csv")
+    sensor = SimulatedSensorInput("D:/GPS/merged_summary.csv")
     controller = TerrainAdaptiveController(sensor)
     controller.run_with_plotting()
