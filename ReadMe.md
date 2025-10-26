@@ -193,7 +193,7 @@ pwm = Kp * error + Kd * (de / dt)
 
 ## 👤 Authors
 
-**Mohammed El Amine Hoceini**  
-**Ines Meliani**  
+[**Mohammed EL Amine Hoceini**](https://github.com/MEDPRG)  
+[**Ines Meliani**](https://github.com/MELIANIInes)
 MSc in Autonomous Systems  
 Eötvös Loránd University, Budapest, Hungary
